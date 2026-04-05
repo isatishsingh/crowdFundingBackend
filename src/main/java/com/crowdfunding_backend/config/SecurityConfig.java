@@ -40,6 +40,9 @@ public class SecurityConfig {
                                       .requestMatchers("/api/users/investor/**")
                                       .hasRole("INVESTOR")
 
+                                      .requestMatchers("/api/creator/**")
+                                      .hasRole("CREATOR")
+
                                       .anyRequest()
                                       .authenticated())
 
