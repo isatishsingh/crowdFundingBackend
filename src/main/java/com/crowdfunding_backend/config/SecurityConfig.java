@@ -43,6 +43,9 @@ public class SecurityConfig {
                                       .requestMatchers("/api/creator/**")
                                       .hasRole("CREATOR")
 
+                                      .requestMatchers("/api/projects/**")
+                                      .permitAll()
+
                                       .anyRequest()
                                       .authenticated())
 
