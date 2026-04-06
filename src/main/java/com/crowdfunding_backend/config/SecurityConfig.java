@@ -46,6 +46,12 @@ public class SecurityConfig {
                                       .requestMatchers("/api/projects/**")
                                       .permitAll()
 
+                                      .requestMatchers("/api/projects")
+                                      .authenticated()
+
+                                      .requestMatchers("/api/investments/**")
+                                      .hasRole("INVESTOR")
+
                                       .anyRequest()
                                       .authenticated())
 

@@ -1,7 +1,9 @@
 package com.crowdfunding_backend.controller;
 
 import com.crowdfunding_backend.dto.project.*;
+import com.crowdfunding_backend.dto.project.ProjectListResponse;
 import com.crowdfunding_backend.service.ProjectService;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -37,5 +39,10 @@ public class ProjectController {
                               Authentication authentication) {
 
     return projectService.deleteProject(id, authentication.getName());
+  }
+
+  @GetMapping
+  public List<ProjectListResponse> getAllProjects() {
+    return projectService.getAllProjects();
   }
 }
