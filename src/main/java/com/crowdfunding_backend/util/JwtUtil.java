@@ -8,7 +8,6 @@ import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-
 @Component
 public class JwtUtil {
 
@@ -16,7 +15,7 @@ public class JwtUtil {
 
   @Value("${jwt.expiration}") private long expiration;
 
-  private Key getSignKey() { return Keys.hmacShaKeyFor(secret.getBytes()); }
+  public Key getSigningKey() { return Keys.hmacShaKeyFor(secret.getBytes()); }
 
   public String generateToken(String email, Role role) {
     return Jwts.builder()
@@ -24,7 +23,7 @@ public class JwtUtil {
         .claim("role", role.name())
         .setIssuedAt(new Date())
         .setExpiration(new Date(System.currentTimeMillis() + expiration))
-        .signWith(getSignKey(), SignatureAlgorithm.HS256)
+        .signWith(getSigningKey(), SignatureAlgorithm.HS256)
         .compact();
   }
 
@@ -38,7 +37,7 @@ public class JwtUtil {
 
   private Date extractExpiration(String token) {
     return Jwts.parserBuilder()
-        .setSigningKey(getSignKey())
+        .setSigningKey(getSigningKey())
         .build()
         .parseClaimsJws(token)
         .getBody()
@@ -47,7 +46,7 @@ public class JwtUtil {
 
   private Claims extractAllClaims(String token) {
     return Jwts.parserBuilder()
-        .setSigningKey(getSignKey())
+        .setSigningKey(getSigningKey())
         .build()
         .parseClaimsJws(token)
         .getBody();

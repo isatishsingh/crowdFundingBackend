@@ -16,7 +16,7 @@ public class CreatorService {
   public CreatorProfileResponse
   createOrUpdateProfile(CreatorProfileRequest request, String email) {
 
-    User user = userRepository.findByEmail(email).orElseThrow(
+    User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
         () -> new RuntimeException("User not found"));
 
     CreatorProfile profile =

@@ -1,3 +1,3 @@
 package com.crowdfunding_backend.entity;
 
-public enum Role { ROLE_CREATOR, ROLE_INVESTOR }
+public enum Role { ADMIN, CREATOR, INVESTOR }

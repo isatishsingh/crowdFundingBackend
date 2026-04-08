@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
 @Service
 public class UserService {
 
@@ -19,7 +18,7 @@ public class UserService {
   @Autowired private JwtUtil jwtUtil;
 
   public String loginAndGenerateToken(String email, String password) {
-    User user = userRepository.findByEmail(email).orElseThrow(
+    User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
         () -> new RuntimeException("User not found"));
 
     if (!passwordEncoder.matches(password, user.getPassword())) {

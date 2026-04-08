@@ -19,7 +19,7 @@ public class ProjectService {
 
   public ProjectResponse createProject(ProjectRequest request, String email) {
 
-    User user = userRepository.findByEmail(email).orElseThrow(
+    User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
         () -> new RuntimeException("User not found"));
 
     // 🔥 KYC CHECK
@@ -58,7 +58,7 @@ public class ProjectService {
   public ProjectResponse updateProject(Long id, ProjectRequest request,
                                        String email) {
 
-    User user = userRepository.findByEmail(email).orElseThrow(
+    User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
         () -> new RuntimeException("User not found"));
 
     Project project =
@@ -82,7 +82,7 @@ public class ProjectService {
   //   delete project
   public String deleteProject(Long id, String email) {
 
-    User user = userRepository.findByEmail(email).orElseThrow(
+    User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
         () -> new RuntimeException("User not found"));
 
     Project project =

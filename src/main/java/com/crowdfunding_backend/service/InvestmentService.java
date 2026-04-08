@@ -19,7 +19,7 @@ public class InvestmentService {
 
   public InvestmentResponse invest(String email, InvestmentRequest request) {
 
-    User investor = userRepository.findByEmail(email).orElseThrow(
+    User investor = userRepository.findByEmailIgnoreCase(email).orElseThrow(
         () -> new CustomException("User not found", 404));
 
     // ✅ Role validation

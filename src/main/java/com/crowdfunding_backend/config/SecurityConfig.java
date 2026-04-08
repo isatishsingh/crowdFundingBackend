@@ -52,6 +52,9 @@ public class SecurityConfig {
                                       .requestMatchers("/api/investments/**")
                                       .hasRole("INVESTOR")
 
+                                      .requestMatchers("/admin/login")
+                                      .permitAll()
+
                                       .anyRequest()
                                       .authenticated())
 
