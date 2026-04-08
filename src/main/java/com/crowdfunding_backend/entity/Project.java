@@ -15,6 +15,9 @@ public class Project {
   private Double goalAmount;
   private Double currentAmount = 0.0;
 
+  private Double totalEquityOffered;
+  private Double equityAllocated = 0.0;
+
   private LocalDateTime deadline;
   private LocalDateTime createdAt;
 
@@ -38,7 +41,18 @@ public class Project {
 
   public User getCreator() { return creator; }
 
+  public Double getTotalEquityOffered() { return totalEquityOffered; }
+
+  public Double getEquityAllocated() { return equityAllocated; }
+
   // ✅ SETTERS
+
+  public void setTotalEquityOffered(Double totalEquityOffered) {
+    this.totalEquityOffered = totalEquityOffered;
+  }
+  public void setEquityAllocated(Double equityAllocated) {
+    this.equityAllocated = equityAllocated;
+  }
 
   public void setId(Long id) { this.id = id; }
 

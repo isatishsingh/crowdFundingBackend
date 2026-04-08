@@ -1,5 +1,7 @@
 package com.crowdfunding_backend.dto.project;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.time.LocalDateTime;
 
 public class ProjectRequest {
@@ -8,6 +10,15 @@ public class ProjectRequest {
   private String description;
   private Double goalAmount;
   private LocalDateTime deadline;
+
+  @NotNull @Positive private Double totalEquityOffered; // 🔥 ADD THIS
+
+  // getters & setters
+  public Double getTotalEquityOffered() { return totalEquityOffered; }
+
+  public void setTotalEquityOffered(Double totalEquityOffered) {
+    this.totalEquityOffered = totalEquityOffered;
+  }
 
   // getters & setters
   public String getTitle() { return title; }

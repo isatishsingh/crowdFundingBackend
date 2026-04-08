@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
 
-
 @Entity
 @Getter
 @Setter
@@ -24,7 +23,15 @@ public class Investment {
   @JoinColumn(name = "project_id", nullable = false)
   private Project project;
 
-  private Double amount;
+  @Column(nullable = false) private Double amount;
 
-  private LocalDateTime investedAt;
+  @Column(name = "equity_percentage", nullable = false)
+  private Double equityPercentage;
+
+  @Column(name = "invested_at") private LocalDateTime investedAt;
+
+  @PrePersist
+  public void prePersist() {
+    this.investedAt = LocalDateTime.now();
+  }
 }

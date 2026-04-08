@@ -6,4 +6,5 @@ import lombok.Data;
 public class InvestmentRequest {
   private Long projectId;
   private Double amount;
+  private Double equityPercentage;
 }

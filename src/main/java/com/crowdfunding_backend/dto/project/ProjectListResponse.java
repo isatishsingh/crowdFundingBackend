@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Data;
 
-
 @Data
 @Builder
 public class ProjectListResponse {
@@ -15,7 +14,9 @@ public class ProjectListResponse {
 
   private Double goalAmount;
   private Double currentAmount;
-
+  private Double totalEquityOffered;
+  private Double equityAllocated;
+  private Double remainingEquity;
   private LocalDateTime deadline;
 
   private Long creatorId;

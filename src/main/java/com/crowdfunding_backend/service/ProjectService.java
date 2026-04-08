@@ -1,6 +1,5 @@
 package com.crowdfunding_backend.service;
 import com.crowdfunding_backend.dto.project.*;
-import com.crowdfunding_backend.dto.project.ProjectListResponse;
 import com.crowdfunding_backend.entity.*;
 import com.crowdfunding_backend.repository.*;
 import java.time.LocalDateTime;
@@ -43,6 +42,9 @@ public class ProjectService {
     project.setTitle(request.getTitle());
     project.setDescription(request.getDescription());
     project.setGoalAmount(request.getGoalAmount());
+    project.setCurrentAmount(0.0);
+    project.setTotalEquityOffered(request.getTotalEquityOffered());
+    project.setEquityAllocated(0.0);
     project.setDeadline(request.getDeadline());
     project.setCreatedAt(LocalDateTime.now());
     project.setCreator(user);
@@ -110,6 +112,16 @@ public class ProjectService {
           double percentage =
               (project.getCurrentAmount() / project.getGoalAmount()) * 100;
 
+          double totalEquity = project.getTotalEquityOffered() != null
+                                   ? project.getTotalEquityOffered()
+                                   : 0.0;
+
+          double allocatedEquity = project.getEquityAllocated() != null
+                                       ? project.getEquityAllocated()
+                                       : 0.0;
+
+          double remainingEquity = totalEquity - allocatedEquity;
+
           return ProjectListResponse.builder()
               .id(project.getId())
               .title(project.getTitle())
@@ -119,8 +131,40 @@ public class ProjectService {
               .deadline(project.getDeadline())
               .creatorId(project.getCreator().getId())
               .fundingPercentage(percentage)
+              .totalEquityOffered(totalEquity)
+              .equityAllocated(allocatedEquity)
+              .remainingEquity(remainingEquity)
               .build();
         })
         .collect(Collectors.toList());
+  }
+
+  public ProjectResponse getProject(Long id) {
+
+    Project project = projectRepository.findById(id).orElseThrow(
+        () -> new RuntimeException("Project not found"));
+
+    ProjectResponse dto = new ProjectResponse();
+
+    dto.setId(project.getId());
+    dto.setTitle(project.getTitle());
+
+    dto.setGoalAmount(project.getGoalAmount());
+    dto.setCurrentAmount(project.getCurrentAmount());
+
+    // 🔥 Remaining Amount
+    dto.setRemainingAmount(project.getGoalAmount() -
+                           project.getCurrentAmount());
+
+    dto.setCreatorEmail(project.getCreator().getEmail());
+
+    // 🔥 Equity fields
+    dto.setTotalEquityOffered(project.getTotalEquityOffered());
+    dto.setEquityAllocated(project.getEquityAllocated());
+
+    dto.setRemainingEquity(project.getTotalEquityOffered() -
+                           project.getEquityAllocated());
+
+    return dto;
   }
 }

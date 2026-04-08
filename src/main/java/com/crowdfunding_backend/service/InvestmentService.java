@@ -23,7 +23,7 @@ public class InvestmentService {
         () -> new CustomException("User not found", 404));
 
     // ✅ Role validation
-    if (!investor.getRole().name().equals("ROLE_INVESTOR")) {
+    if (!investor.getRole().name().equals("INVESTOR")) {
       throw new CustomException("Only investors can invest", 403);
     }
 
@@ -32,7 +32,7 @@ public class InvestmentService {
             .orElseThrow(() -> new CustomException("Project not found", 404));
 
     // ❌ Self investment restriction
-    if (project.getCreator().getId().equals(email)) {
+    if (project.getCreator().getId().equals(investor.getId())) {
       throw new CustomException("Cannot invest in your own project", 400);
     }
 
@@ -46,11 +46,30 @@ public class InvestmentService {
       throw new CustomException("Invalid amount", 400);
     }
 
-    // ❌ Overfunding check
-    double updatedAmount = project.getCurrentAmount() + request.getAmount();
+    if (request.getEquityPercentage() <= 0) {
+      throw new CustomException("Invalid equity", 400);
+    }
 
-    if (updatedAmount > project.getGoalAmount()) {
-      throw new CustomException("Investment exceeds goal amount", 400);
+    double remainingAmount =
+        project.getGoalAmount() - project.getCurrentAmount();
+    double remainingEquity =
+        project.getTotalEquityOffered() - project.getEquityAllocated();
+
+    // ❌ Overfunding check
+    // double updatedAmount = project.getCurrentAmount() + request.getAmount();
+
+    // if (updatedAmount > project.getGoalAmount()) {
+    //   throw new CustomException("Investment exceeds goal amount", 400);
+    // }
+
+    // ❌ Overfunding check
+    if (request.getAmount() > remainingAmount) {
+      throw new CustomException("Investment exceeds remaining amount", 400);
+    }
+
+    // ❌ Over equity check
+    if (request.getEquityPercentage() > remainingEquity) {
+      throw new CustomException("Equity exceeds remaining equity", 400);
     }
 
     // ✅ Create investment
@@ -58,11 +77,16 @@ public class InvestmentService {
                                 .investor(investor)
                                 .project(project)
                                 .amount(request.getAmount())
-                                .investedAt(LocalDateTime.now())
+                                .equityPercentage(request.getEquityPercentage())
+                                // .investedAt(LocalDateTime.now())
                                 .build();
 
     // ✅ Update project amount
-    project.setCurrentAmount(updatedAmount);
+    project.setCurrentAmount(project.getCurrentAmount() + request.getAmount());
+
+    // 📊 Update equity allocation
+    project.setEquityAllocated(project.getEquityAllocated() +
+                               request.getEquityPercentage());
 
     projectRepository.save(project);
     investmentRepository.save(investment);
@@ -72,6 +96,7 @@ public class InvestmentService {
         .investorId(investor.getId())
         .projectId(project.getId())
         .amount(investment.getAmount())
+        .equityPercentage(investment.getEquityPercentage())
         .investedAt(investment.getInvestedAt())
         .build();
   }
