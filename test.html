@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+  </head>
+  <body>
+    <script>
+      const socket = new SockJS("http://localhost:8080/ws-chat");
+      const stompClient = Stomp.over(socket);
+
+      stompClient.connect(
+        {
+          Authorization:
+            "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBbmphbGkxMjFAZ21haWwuY29tIiwicm9sZSI6IklOVkVTVE9SIiwiaWF0IjoxNzc1ODAwNjEyLCJleHAiOjE3NzU4MDQyMTJ9.ipQ4VKg9EBuLBbzf2dIWh1jOnr60ZuruZg7tGjNWNAw",
+        },
+        function () {
+          console.log("Connected");
+
+          stompClient.subscribe("/user/queue/messages", function (msg) {
+            console.log("MESSAGE:", JSON.parse(msg.body));
+          });
+
+          stompClient.subscribe("/user/queue/errors", (err) => {
+            console.error("ERROR:", err.body);
+          });
+
+          stompClient.send(
+            "/app/chat.send",
+            {},
+            JSON.stringify({
+              receiverId: 15,
+              projectId: 1,
+              message: "Hello From Investor",
+            }),
+          );
+
+        },
+        function (error) {
+          console.error("ERROR:", error);
+        },
+      );
+    </script>
+  </body>
+</html>

@@ -55,6 +55,9 @@ public class SecurityConfig {
                                       .requestMatchers("/admin/login")
                                       .permitAll()
 
+                                      .requestMatchers("/ws-chat/**")
+                                      .permitAll()
+
                                       .anyRequest()
                                       .authenticated())
 

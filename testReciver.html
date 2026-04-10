@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+  </head>
+  <body>
+    <script>
+      const socket = new SockJS("http://localhost:8080/ws-chat");
+      const stompClient = Stomp.over(socket);
+
+      stompClient.connect(
+        {
+          Authorization:
+            "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBYmhpcmFqMTIxQGdtYWlsLmNvbSIsInJvbGUiOiJDUkVBVE9SIiwiaWF0IjoxNzc1Nzk4OTY3LCJleHAiOjE3NzU4MDI1Njd9._UbJPIboPwTVnVzomIlCePru26PAbmvsg487AaQYr-k",
+        },
+        function () {
+          console.log("Connected");
+
+          stompClient.subscribe("/user/queue/messages", function (msg) {
+            console.log("MESSAGE:", JSON.parse(msg.body));
+          });
+
+          stompClient.subscribe("/user/queue/errors", (err) => {
+            console.error("ERROR:", err.body);
+          });
+
+          stompClient.send(
+            "/app/chat.send",
+            {},
+            JSON.stringify({
+              receiverId: 16,
+              projectId: 9,
+              message: "Hello From Founding Team",
+            }),
+          );
+
+          stompClient.subscribe("/user/queue/errors", (err) => {
+            console.error("ERROR:", err.body);
+          });
+        },
+        function (error) {
+          console.error("ERROR:", error);
+        },
+      );
+    </script>
+  </body>
+</html>
