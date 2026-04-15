@@ -1,4 +1,6 @@
 package com.crowdfunding_backend.service;
+// import static org.junit.jupiter.api.DynamicTest.stream;
+
 import com.crowdfunding_backend.dto.project.*;
 import com.crowdfunding_backend.entity.*;
 import com.crowdfunding_backend.repository.*;
@@ -102,15 +104,17 @@ public class ProjectService {
 
     // ✅ Best practice: only active + not fully funded
     List<Project> projects =
-        projectRepository.findByDeadlineAfter(LocalDateTime.now())
-            .stream()
-            .filter(p -> p.getCurrentAmount() < p.getGoalAmount())
-            .collect(Collectors.toList());
+        projectRepository.findActiveAndNotFundedProjects(LocalDateTime.now());
+    // .stream()
+    // .filter(p -> p.getCurrentAmount() < p.getGoalAmount())
+    // .collect(Collectors.toList());
 
     return projects.stream()
         .map(project -> {
           double percentage =
-              (project.getCurrentAmount() / project.getGoalAmount()) * 100;
+              project.getGoalAmount() != 0
+                  ? (project.getCurrentAmount() / project.getGoalAmount()) * 100
+                  : 0;
 
           double totalEquity = project.getTotalEquityOffered() != null
                                    ? project.getTotalEquityOffered()
@@ -122,12 +126,19 @@ public class ProjectService {
 
           double remainingEquity = totalEquity - allocatedEquity;
 
+          double goal =
+              project.getGoalAmount() != null ? project.getGoalAmount() : 0;
+
+          double current = project.getCurrentAmount() != null
+                               ? project.getCurrentAmount()
+                               : 0;
+
           return ProjectListResponse.builder()
               .id(project.getId())
               .title(project.getTitle())
               .description(project.getDescription())
-              .goalAmount(project.getGoalAmount())
-              .currentAmount(project.getCurrentAmount())
+              .goalAmount(goal)
+              .currentAmount(current)
               .deadline(project.getDeadline())
               .creatorId(project.getCreator().getId())
               .fundingPercentage(percentage)
@@ -166,5 +177,9 @@ public class ProjectService {
                            project.getEquityAllocated());
 
     return dto;
+  }
+
+  public List<Project> getActiveProjects() {
+    return projectRepository.findByDeadlineAfter(LocalDateTime.now());
   }
 }

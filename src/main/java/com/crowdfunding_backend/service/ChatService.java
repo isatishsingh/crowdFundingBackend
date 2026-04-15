@@ -3,6 +3,7 @@ package com.crowdfunding_backend.service;
 import com.crowdfunding_backend.entity.*;
 import com.crowdfunding_backend.repository.*;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -68,5 +69,19 @@ public class ChatService {
                            .build();
 
     return chatRepository.save(chat);
+  }
+
+  public List<ChatMessage> getChatHistory(String email, Long receiverId,
+                                          Long projectId) {
+
+    User sender = userRepository.findByEmailIgnoreCase(email).orElseThrow(
+        () -> new RuntimeException("User not found"));
+
+    // 🔥 Get conversation
+    Conversation conversation =
+        getOrCreateConversation(sender.getId(), receiverId, projectId);
+
+    return chatRepository.findByConversationIdOrderByCreatedAtAsc(
+        conversation.getId());
   }
 }

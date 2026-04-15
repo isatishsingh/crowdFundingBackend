@@ -1,7 +1,6 @@
 package com.crowdfunding_backend.controller;
 
 import com.crowdfunding_backend.dto.project.*;
-import com.crowdfunding_backend.dto.project.ProjectListResponse;
 import com.crowdfunding_backend.service.ProjectService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,5 +43,10 @@ public class ProjectController {
   @GetMapping
   public List<ProjectListResponse> getAllProjects() {
     return projectService.getAllProjects();
+  }
+
+  @GetMapping("/{id}")
+  public ProjectResponse getProject(@PathVariable Long id) {
+    return projectService.getProject(id);
   }
 }

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+<button onclick="pay()">Pay Now</button>
+
+<script>
+function pay() {
+
+  fetch("https://growl-yoyo-squatting.ngrok-free.dev/api/payments/create-order", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBbmphbGkxMjFAZ21haWwuY29tIiwicm9sZSI6IklOVkVTVE9SIiwiaWF0IjoxNzc2Mjc4ODQ5LCJleHAiOjE3NzYyODI0NDl9.F7n0H8qkSqxYYSXTRdZ3xDNqn730ewJ9E4iP1W41nuQ"
+    },
+    body: JSON.stringify({
+      projectId: 9,
+      amount: 30000,
+      equityPercentage: 1
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    var options = {
+      key: "rzp_test_Sdl4QNf6TgnmWv",
+      amount: data.amount * 100,
+      currency: "INR",
+      order_id: data.orderId,
+      handler: function (response) {
+        console.log("Payment Success", response);
+      }
+    };
+
+    var rzp = new Razorpay(options);
+    rzp.open();
+  });
+}
+</script>
+
+</body>
+</html>

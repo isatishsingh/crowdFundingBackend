@@ -17,12 +17,39 @@ public class InvestmentService {
 
   @Autowired private UserRepository userRepository;
 
+  public void createInvestmentFromPayment(Payment payment) {
+
+    // Fetch user
+    User investor =
+        userRepository.findById(payment.getUserId())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    // Fetch project
+    Project project =
+        projectRepository.findById(payment.getProjectId())
+            .orElseThrow(() -> new RuntimeException("Project not found"));
+
+    // Create investment (CORRECT WAY)
+    Investment investment = Investment.builder()
+                                .investor(investor)
+                                .project(project)
+                                .amount(payment.getAmount())
+                                .equityPercentage(payment.getEquityPercentage())
+                                .build();
+
+    // Update project funding
+    project.setCurrentAmount(project.getCurrentAmount() + payment.getAmount());
+
+    projectRepository.save(project);
+    investmentRepository.save(investment);
+  }
+
   public InvestmentResponse invest(String email, InvestmentRequest request) {
 
     User investor = userRepository.findByEmailIgnoreCase(email).orElseThrow(
         () -> new CustomException("User not found", 404));
 
-    // ✅ Role validation
+    // Role validation
     if (!investor.getRole().name().equals("INVESTOR")) {
       throw new CustomException("Only investors can invest", 403);
     }
@@ -31,17 +58,17 @@ public class InvestmentService {
         projectRepository.findById(request.getProjectId())
             .orElseThrow(() -> new CustomException("Project not found", 404));
 
-    // ❌ Self investment restriction
+    // Self investment restriction
     if (project.getCreator().getId().equals(investor.getId())) {
       throw new CustomException("Cannot invest in your own project", 400);
     }
 
-    // ❌ Deadline validation
+    // Deadline validation
     if (project.getDeadline().isBefore(LocalDateTime.now())) {
       throw new CustomException("Project deadline passed", 400);
     }
 
-    // ❌ Amount validation
+    // Amount validation
     if (request.getAmount() <= 0) {
       throw new CustomException("Invalid amount", 400);
     }
@@ -55,36 +82,28 @@ public class InvestmentService {
     double remainingEquity =
         project.getTotalEquityOffered() - project.getEquityAllocated();
 
-    // ❌ Overfunding check
-    // double updatedAmount = project.getCurrentAmount() + request.getAmount();
-
-    // if (updatedAmount > project.getGoalAmount()) {
-    //   throw new CustomException("Investment exceeds goal amount", 400);
-    // }
-
-    // ❌ Overfunding check
+    // OverFunding check
     if (request.getAmount() > remainingAmount) {
       throw new CustomException("Investment exceeds remaining amount", 400);
     }
 
-    // ❌ Over equity check
+    // Over equity check
     if (request.getEquityPercentage() > remainingEquity) {
       throw new CustomException("Equity exceeds remaining equity", 400);
     }
 
-    // ✅ Create investment
+    // Create investment
     Investment investment = Investment.builder()
                                 .investor(investor)
                                 .project(project)
                                 .amount(request.getAmount())
                                 .equityPercentage(request.getEquityPercentage())
-                                // .investedAt(LocalDateTime.now())
                                 .build();
 
-    // ✅ Update project amount
+    // Update project amount
     project.setCurrentAmount(project.getCurrentAmount() + request.getAmount());
 
-    // 📊 Update equity allocation
+    // Update equity allocation
     project.setEquityAllocated(project.getEquityAllocated() +
                                request.getEquityPercentage());
 
