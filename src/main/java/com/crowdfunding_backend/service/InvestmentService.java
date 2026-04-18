@@ -1,6 +1,6 @@
 package com.crowdfunding_backend.service;
 
-import com.crowdfunding_backend.dto.investment.*;
+import com.crowdfunding_backend.dto.investmentRequest.*;
 import com.crowdfunding_backend.entity.*;
 import com.crowdfunding_backend.exception.CustomException;
 import com.crowdfunding_backend.repository.*;
@@ -44,7 +44,7 @@ public class InvestmentService {
     investmentRepository.save(investment);
   }
 
-  public InvestmentResponse invest(String email, InvestmentRequest request) {
+  public InvestmentRequestResponse invest(String email, CreateInvestmentRequest request) {
 
     User investor = userRepository.findByEmailIgnoreCase(email).orElseThrow(
         () -> new CustomException("User not found", 404));
@@ -110,7 +110,7 @@ public class InvestmentService {
     projectRepository.save(project);
     investmentRepository.save(investment);
 
-    return InvestmentResponse.builder()
+    return InvestmentRequestResponse.builder()
         .id(investment.getId())
         .investorId(investor.getId())
         .projectId(project.getId())

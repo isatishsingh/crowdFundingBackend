@@ -5,26 +5,23 @@ import java.time.LocalDateTime;
 import lombok.*;
 
 @Entity
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Payment {
+public class InvestmentRequest {
 
   @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
 
-  private Long userId;
+  private Long investorId;
   private Long projectId;
 
   private Double amount;
-
-  private String status; // PENDING, SUCCESS, FAILED
   private Double equityPercentage;
-  private Long investmentRequestId;
 
-  private String razorpayOrderId;
-  private String razorpayPaymentId;
+  @Enumerated(EnumType.STRING) private Status status;
 
   private LocalDateTime createdAt;
+
+  public enum Status { PENDING, APPROVED, REJECTED, COMPLETED }
 }

@@ -14,6 +14,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
   // List<Project> findByDueDateAfter(LocalDateTime now);
   List<Project> findByDeadlineAfter(LocalDateTime now);
+  List<Project> findByCreatorId(Long creatorId);
   Optional<Project> findByTitleAndCreator_Id(String title, Long creatorId);
   Optional<Project> findByIdAndCreator_Id(Long projectId, Long creatorId);
   Page<Project> findByTitleContainingIgnoreCase(String title,
