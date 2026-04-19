@@ -6,6 +6,7 @@ import com.crowdfunding_backend.entity.User;
 import com.crowdfunding_backend.service.InvestmentRequestService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +30,16 @@ public class InvestmentRequestController {
     User user = (User)auth.getPrincipal();
 
     return service.getRequestsForCustomer(user.getId());
+  }
+
+  /** Lists all investment requests for the logged-in investor (needed for dashboard + Pay after approval). */
+  @GetMapping("/investor")
+  @PreAuthorize("hasRole('INVESTOR')")
+  public List<InvestmentRequest> getInvestorRequests(Authentication auth) {
+
+    User user = (User)auth.getPrincipal();
+
+    return service.getInvestorRequests(user.getId());
   }
 
   @PostMapping("/{id}/approve")

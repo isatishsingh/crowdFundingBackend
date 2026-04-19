@@ -17,6 +17,7 @@ public class ProjectService {
   @Autowired private ProjectRepository projectRepository;
   @Autowired private UserRepository userRepository;
   @Autowired private CreatorProfileRepository creatorProfileRepository;
+  @Autowired private InvestmentRepository investmentRepository;
 
   public ProjectResponse createProject(ProjectRequest request, String email) {
 
@@ -102,7 +103,7 @@ public class ProjectService {
 
   public List<ProjectListResponse> getAllProjects() {
 
-    // ✅ Best practice: only active + not fully funded
+    // Best practice: only active + not fully funded
     List<Project> projects =
         projectRepository.findActiveAndNotFundedProjects(LocalDateTime.now());
     // .stream()
@@ -163,13 +164,13 @@ public class ProjectService {
     dto.setGoalAmount(project.getGoalAmount());
     dto.setCurrentAmount(project.getCurrentAmount());
 
-    // 🔥 Remaining Amount
+    // Remaining Amount
     dto.setRemainingAmount(project.getGoalAmount() -
                            project.getCurrentAmount());
 
     dto.setCreatorEmail(project.getCreator().getEmail());
 
-    // 🔥 Equity fields
+    // Equity fields
     dto.setTotalEquityOffered(project.getTotalEquityOffered());
     dto.setEquityAllocated(project.getEquityAllocated());
 
@@ -181,5 +182,24 @@ public class ProjectService {
 
   public List<Project> getActiveProjects() {
     return projectRepository.findByDeadlineAfter(LocalDateTime.now());
+  }
+
+  /**
+   * Completed investments (after payment) for transparency on the project
+   * page.
+   */
+  public List<ProjectInvestorResponse> getProjectInvestors(Long projectId) {
+
+    if (!projectRepository.existsById(projectId)) {
+      throw new RuntimeException("Project not found");
+    }
+
+    return investmentRepository.findByProject_Id(projectId)
+        .stream()
+        .map(inv
+             -> new ProjectInvestorResponse(
+                 inv.getInvestor().getName(), inv.getAmount(),
+                 inv.getEquityPercentage(), inv.getInvestedAt()))
+        .collect(Collectors.toList());
   }
 }

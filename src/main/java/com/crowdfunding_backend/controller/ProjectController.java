@@ -45,6 +45,12 @@ public class ProjectController {
     return projectService.getAllProjects();
   }
 
+  /** Completed investments: investor name, amount, equity %, date (public). */
+  @GetMapping("/{id}/investors")
+  public List<ProjectInvestorResponse> getProjectInvestors(@PathVariable Long id) {
+    return projectService.getProjectInvestors(id);
+  }
+
   @GetMapping("/{id}")
   public ProjectResponse getProject(@PathVariable Long id) {
     return projectService.getProject(id);
