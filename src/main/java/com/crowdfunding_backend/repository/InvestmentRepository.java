@@ -10,4 +10,6 @@ public interface InvestmentRepository extends JpaRepository<Investment, Long> {
   List<Investment> findByInvestor_Id(Long investorId);
 
   List<Investment> findByProject_Id(Long projectId);
+
+  long countByProject_Id(Long projectId);
 }

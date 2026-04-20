@@ -32,7 +32,10 @@ public class InvestmentRequestController {
     return service.getRequestsForCustomer(user.getId());
   }
 
-  /** Lists all investment requests for the logged-in investor (needed for dashboard + Pay after approval). */
+  /**
+   * Lists all investment requests for the logged-in investor (needed for
+   * dashboard + Pay after approval).
+   */
   @GetMapping("/investor")
   @PreAuthorize("hasRole('INVESTOR')")
   public List<InvestmentRequest> getInvestorRequests(Authentication auth) {

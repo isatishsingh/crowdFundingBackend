@@ -64,6 +64,23 @@ public class SecurityConfig {
                    .requestMatchers("/api/investments/**")
                    .hasRole("INVESTOR")
 
+                   .requestMatchers(HttpMethod.POST,
+                                    "/api/investment-request")
+                   .hasRole("INVESTOR")
+
+                   .requestMatchers(HttpMethod.GET,
+                                    "/api/investment-request/investor")
+                   .hasRole("INVESTOR")
+
+                   .requestMatchers(HttpMethod.GET,
+                                    "/api/investment-request/customer")
+                   .hasRole("CREATOR")
+
+                   .requestMatchers(HttpMethod.POST,
+                                    "/api/investment-request/*/approve",
+                                    "/api/investment-request/*/reject")
+                   .hasRole("CREATOR")
+
                    .requestMatchers("/admin/login")
                    .permitAll()
 

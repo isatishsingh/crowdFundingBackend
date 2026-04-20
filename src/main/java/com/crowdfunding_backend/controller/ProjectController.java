@@ -55,4 +55,9 @@ public class ProjectController {
   public ProjectResponse getProject(@PathVariable Long id) {
     return projectService.getProject(id);
   }
+
+  @GetMapping("/{id}/stats")
+  public ProjectStatsResponse getProjectStats(@PathVariable Long id) {
+    return projectService.getProjectStats(id);
+  }
 }

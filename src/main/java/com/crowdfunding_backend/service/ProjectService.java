@@ -202,4 +202,16 @@ public class ProjectService {
                  inv.getEquityPercentage(), inv.getInvestedAt()))
         .collect(Collectors.toList());
   }
+
+  public ProjectStatsResponse getProjectStats(Long projectId) {
+    if (!projectRepository.existsById(projectId)) {
+      throw new RuntimeException("Project not found");
+    }
+
+    long investorCount = investmentRepository.countByProject_Id(projectId);
+
+    // Placeholder engagement counters until dedicated tables/endpoints are
+    // implemented.
+    return new ProjectStatsResponse(investorCount, 0, 0, 0);
+  }
 }
