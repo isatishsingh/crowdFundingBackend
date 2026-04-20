@@ -8,6 +8,8 @@ import com.crowdfunding_backend.repository.InvestmentRequestRepository;
 import com.crowdfunding_backend.repository.PaymentRepository;
 import com.crowdfunding_backend.repository.ProjectRepository;
 import com.crowdfunding_backend.repository.UserRepository;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -53,11 +55,16 @@ public class PaymentDetailsValidation {
       throw new CustomException("Invalid equity", 400);
     }
 
+    double normalizedEquity = normalizeEquity(equityPercentage);
+    if (normalizedEquity < 0.1) {
+      throw new CustomException("Minimum equity is 0.1%", 400);
+    }
+
     double remainingAmount =
         project.getGoalAmount() - project.getCurrentAmount();
 
-    double remainingEquity =
-        project.getTotalEquityOffered() - project.getEquityAllocated();
+    double remainingEquity = normalizeEquity(
+        project.getTotalEquityOffered() - project.getEquityAllocated());
 
     // OverFunding check
     if (amount > remainingAmount) {
@@ -65,9 +72,20 @@ public class PaymentDetailsValidation {
     }
 
     // Over equity check
-    if (equityPercentage > remainingEquity) {
+    BigDecimal requested = BigDecimal.valueOf(normalizedEquity);
+    BigDecimal remaining = BigDecimal.valueOf(remainingEquity);
+    if (requested.compareTo(remaining) > 0) {
       throw new CustomException("Equity exceeds remaining equity", 400);
     }
+  }
+
+  public double normalizeEquity(Double equityPercentage) {
+    if (equityPercentage == null) {
+      return 0.0;
+    }
+    return BigDecimal.valueOf(equityPercentage)
+        .setScale(1, RoundingMode.HALF_UP)
+        .doubleValue();
   }
 
   public boolean verifyPayment(VerifyPaymentRequest request) {
@@ -159,8 +177,9 @@ public class PaymentDetailsValidation {
     project.setCurrentAmount(project.getCurrentAmount() + request.getAmount());
 
     // Update equity
-    project.setEquityAllocated(project.getEquityAllocated() +
-                               request.getEquityPercentage());
+    double updatedEquity = normalizeEquity(
+        project.getEquityAllocated() + request.getEquityPercentage());
+    project.setEquityAllocated(updatedEquity);
 
     // Mark request completed
     request.setStatus(InvestmentRequest.Status.COMPLETED);

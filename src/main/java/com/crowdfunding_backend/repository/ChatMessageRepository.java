@@ -10,4 +10,6 @@ public interface ChatMessageRepository
 
   List<ChatMessage>
   findByConversationIdOrderByCreatedAtAsc(Long conversationId);
+
+  ChatMessage findTopByConversationIdOrderByCreatedAtDesc(Long conversationId);
 }

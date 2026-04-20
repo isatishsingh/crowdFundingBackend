@@ -1,6 +1,7 @@
 package com.crowdfunding_backend.controller;
 
 import com.crowdfunding_backend.dto.chat.ChatMessageDTO;
+import com.crowdfunding_backend.dto.chat.ConversationSummaryDTO;
 import com.crowdfunding_backend.entity.ChatMessage;
 import com.crowdfunding_backend.entity.User;
 import com.crowdfunding_backend.service.ChatService;
@@ -35,5 +36,21 @@ public class ChatController {
     User user = (User)authentication.getPrincipal();
 
     return chatService.getChatHistory(user.getEmail(), receiverId, projectId);
+  }
+
+  @GetMapping("/messages/by-conversation")
+  public List<ChatMessage> getChatHistoryByConversation(
+      Authentication authentication,
+      @RequestParam Long conversationId) {
+    User user = (User) authentication.getPrincipal();
+    return chatService.getChatHistoryByConversationId(user.getEmail(),
+                                                      conversationId);
+  }
+
+  @GetMapping("/conversations")
+  public List<ConversationSummaryDTO>
+  getConversations(Authentication authentication) {
+    User user = (User) authentication.getPrincipal();
+    return chatService.getConversations(user.getEmail());
   }
 }

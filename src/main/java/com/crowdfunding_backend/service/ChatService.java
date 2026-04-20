@@ -1,9 +1,15 @@
 package com.crowdfunding_backend.service;
 
+import com.crowdfunding_backend.dto.chat.ConversationSummaryDTO;
 import com.crowdfunding_backend.entity.*;
 import com.crowdfunding_backend.repository.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -77,11 +83,92 @@ public class ChatService {
     User sender = userRepository.findByEmailIgnoreCase(email).orElseThrow(
         () -> new RuntimeException("User not found"));
 
-    // 🔥 Get conversation
-    Conversation conversation =
-        getOrCreateConversation(sender.getId(), receiverId, projectId);
+    Long smaller = Math.min(sender.getId(), receiverId);
+    Long larger = Math.max(sender.getId(), receiverId);
 
-    return chatRepository.findByConversationIdOrderByCreatedAtAsc(
-        conversation.getId());
+    // IMPORTANT: viewing chat history must NOT create a conversation
+    return conversationRepository
+        .findByUser1IdAndUser2IdAndProjectId(smaller, larger, projectId)
+        .map(c -> chatRepository.findByConversationIdOrderByCreatedAtAsc(c.getId()))
+        .orElseGet(List::of);
+  }
+
+  public List<ConversationSummaryDTO> getConversations(String email) {
+    User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
+        () -> new RuntimeException("User not found"));
+
+    List<Conversation> conversations =
+        conversationRepository.findByUser1IdOrUser2IdOrderByCreatedAtDesc(
+            user.getId(), user.getId());
+
+    // Build summaries and drop empty conversations (no messages),
+    // then de-duplicate by (minUser,maxUser,projectId) for legacy data.
+    Map<String, ConversationSummaryDTO> bestByKey = new HashMap<>();
+
+    for (Conversation conversation : conversations) {
+      ChatMessage lastMessage =
+          chatRepository.findTopByConversationIdOrderByCreatedAtDesc(
+              conversation.getId());
+
+      // If a conversation has no messages, don't show it in the list.
+      if (lastMessage == null) {
+        continue;
+      }
+
+      Long otherUserId = conversation.getUser1Id().equals(user.getId())
+          ? conversation.getUser2Id()
+          : conversation.getUser1Id();
+
+      User otherUser = userRepository.findById(otherUserId).orElse(null);
+      Project project =
+          projectRepository.findById(conversation.getProjectId()).orElse(null);
+
+      ConversationSummaryDTO dto = ConversationSummaryDTO.builder()
+          .conversationId(conversation.getId())
+          .projectId(conversation.getProjectId())
+          .projectTitle(project != null ? project.getTitle() : "Project")
+          .receiverId(otherUserId)
+          .receiverName(otherUser != null ? otherUser.getName() : "Participant")
+          .lastMessage(lastMessage.getMessage())
+          .lastMessageAt(lastMessage.getCreatedAt())
+          .build();
+
+      Long smaller = Math.min(conversation.getUser1Id(), conversation.getUser2Id());
+      Long larger = Math.max(conversation.getUser1Id(), conversation.getUser2Id());
+      String key = smaller + ":" + larger + ":" + conversation.getProjectId();
+
+      ConversationSummaryDTO existing = bestByKey.get(key);
+      if (existing == null) {
+        bestByKey.put(key, dto);
+        continue;
+      }
+
+      LocalDateTime existingAt = existing.getLastMessageAt();
+      if (existingAt == null || dto.getLastMessageAt().isAfter(existingAt)) {
+        bestByKey.put(key, dto);
+      }
+    }
+
+    List<ConversationSummaryDTO> result = new ArrayList<>(bestByKey.values());
+    result.sort(Comparator.comparing(ConversationSummaryDTO::getLastMessageAt,
+                                     Comparator.nullsLast(Comparator.naturalOrder()))
+                    .reversed());
+    return result;
+  }
+
+  public List<ChatMessage> getChatHistoryByConversationId(String email,
+                                                          Long conversationId) {
+    User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
+        () -> new RuntimeException("User not found"));
+
+    Conversation conversation = conversationRepository.findById(conversationId)
+        .orElseThrow(() -> new RuntimeException("Conversation not found"));
+
+    if (!Objects.equals(conversation.getUser1Id(), user.getId()) &&
+        !Objects.equals(conversation.getUser2Id(), user.getId())) {
+      throw new RuntimeException("Not allowed to view this conversation");
+    }
+
+    return chatRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
   }
 }

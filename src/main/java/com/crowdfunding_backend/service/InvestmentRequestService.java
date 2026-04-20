@@ -31,13 +31,15 @@ public class InvestmentRequestService {
 
     validation.validateInvestment(investor, project, request.getAmount(),
                                   request.getEquityPercentage());
+    double normalizedEquity =
+        validation.normalizeEquity(request.getEquityPercentage());
 
     InvestmentRequest entity =
         InvestmentRequest.builder()
             .investorId(investor.getId())
             .projectId(project.getId())
             .amount(request.getAmount())
-            .equityPercentage(request.getEquityPercentage())
+            .equityPercentage(normalizedEquity)
             .status(InvestmentRequest.Status.PENDING)
             .createdAt(LocalDateTime.now())
             .build();
