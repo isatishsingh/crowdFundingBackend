@@ -1,6 +1,7 @@
 package com.crowdfunding_backend.controller;
 
 import com.crowdfunding_backend.dto.project.*;
+import com.crowdfunding_backend.entity.User;
 import com.crowdfunding_backend.service.ProjectService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,10 @@ public class ProjectController {
   public ProjectResponse createProject(@RequestBody ProjectRequest request,
                                        Authentication authentication) {
 
-    String email = authentication.getName();
+    System.out.println("Logged in user: " + authentication.getName());
+    User user = (User)authentication.getPrincipal();
+    String email = user.getEmail();
+    System.out.println("Logged in email: " + email);
     return projectService.createProject(request, email);
   }
 
@@ -47,7 +51,8 @@ public class ProjectController {
 
   /** Completed investments: investor name, amount, equity %, date (public). */
   @GetMapping("/{id}/investors")
-  public List<ProjectInvestorResponse> getProjectInvestors(@PathVariable Long id) {
+  public List<ProjectInvestorResponse>
+  getProjectInvestors(@PathVariable Long id) {
     return projectService.getProjectInvestors(id);
   }
 

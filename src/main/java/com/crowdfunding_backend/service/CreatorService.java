@@ -35,6 +35,8 @@ public class CreatorService {
         profile.getPanNumber() != null && !profile.getPanNumber().isEmpty()) {
 
       profile.setIsKycVerified(true);
+      profile.setIsEmailVerified(true);
+      profile.setIsMobileVerified(true);
     } else {
       profile.setIsKycVerified(false);
     }

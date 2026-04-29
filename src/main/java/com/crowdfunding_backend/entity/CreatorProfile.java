@@ -52,6 +52,14 @@ public class CreatorProfile {
     this.isKycVerified = isKycVerified;
   }
 
+  public void setIsEmailVerified(Boolean isEmailVerified) {
+    this.isEmailVerified = isEmailVerified;
+  }
+
+  public void setIsMobileVerified(Boolean isMobileVerified) {
+    this.isMobileVerified = isMobileVerified;
+  }
+
   public User getUser() { return user; }
 
   public void setUser(User user) { this.user = user; }
