@@ -48,6 +48,10 @@ public class CreatorProfile {
 
   public Boolean getIsKycVerified() { return isKycVerified; }
 
+  public Boolean getIsEmailVerified() { return isEmailVerified; }
+
+  public Boolean getIsMobileVerified() { return isMobileVerified; }
+
   public void setIsKycVerified(Boolean isKycVerified) {
     this.isKycVerified = isKycVerified;
   }

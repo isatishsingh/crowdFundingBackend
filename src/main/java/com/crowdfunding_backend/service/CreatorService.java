@@ -23,6 +23,14 @@ public class CreatorService {
         creatorProfileRepository.findByUser_Id(user.getId())
             .orElse(new CreatorProfile());
 
+    if (Boolean.TRUE.equals(profile.getIsKycVerified()) &&
+        Boolean.TRUE.equals(profile.getIsMobileVerified()) &&
+        Boolean.TRUE.equals(profile.getIsEmailVerified())) {
+
+      return new CreatorProfileResponse(user.getEmail(), true,
+                                        "Profile is already verified");
+    }
+
     profile.setAadhaarNumber(request.getAadhaarNumber());
     profile.setPanNumber(request.getPanNumber());
     profile.setGstNumber(request.getGstNumber());
