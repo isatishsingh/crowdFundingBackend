@@ -27,20 +27,9 @@ public class ProjectService {
     User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
         () -> new CustomException("User account not found.", 404));
 
-    // check KYC and subscription status of creator before creating any project
     CreatorProfile profile =
-        creatorProfileRepository.findByUser_Id(user.getId())
-            .orElseThrow(
-                ()
-                    -> new CustomException(
-                        "Complete creator verification (KYC) before listing a project.",
-                        403, "KYC_NOT_SUBMITTED"));
-
-    if (!profile.getIsKycVerified()) {
-      throw new CustomException(
-          "Your KYC is pending approval. You can create projects after verification.",
-          403, "KYC_PENDING");
-    }
+        creatorProfileRepository.findByUser_Id(user.getId()).orElse(null);
+    CreatorService.assertCreatorMayCreateProjects(profile);
 
     subscriptionService.validateCreatorCanCreateProject(
         user, request.getGoalAmount());

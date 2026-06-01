@@ -1,6 +1,8 @@
 package com.crowdfunding_backend.controller;
 
+import com.crowdfunding_backend.entity.KycStatus;
 import com.crowdfunding_backend.service.AdminService;
+import com.crowdfunding_backend.service.CreatorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
   @Autowired private AdminService adminService;
+
+  @Autowired private CreatorService creatorService;
 
   @GetMapping("/dashboard")
   @PreAuthorize("hasRole('ADMIN')")
@@ -55,5 +59,30 @@ public class AdminController {
            @RequestParam(required = false) String search) {
 
     return ResponseEntity.ok(adminService.getAllUsers(page, size, search));
+  }
+
+  @GetMapping("/kyc/verifications")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<?> listKycVerifications(
+      @RequestParam(defaultValue = "PENDING") String status) {
+    KycStatus kycStatus;
+    try {
+      kycStatus = KycStatus.valueOf(status.toUpperCase());
+    } catch (IllegalArgumentException ex) {
+      kycStatus = KycStatus.PENDING;
+    }
+    return ResponseEntity.ok(creatorService.listProfilesForAdmin(kycStatus));
+  }
+
+  @PostMapping("/kyc/{profileId}/approve")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<?> approveKyc(@PathVariable Long profileId) {
+    return ResponseEntity.ok(creatorService.approveProfile(profileId));
+  }
+
+  @PostMapping("/kyc/{profileId}/reject")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<?> rejectKyc(@PathVariable Long profileId) {
+    return ResponseEntity.ok(creatorService.rejectProfile(profileId));
   }
 }

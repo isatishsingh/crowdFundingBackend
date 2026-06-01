@@ -9,13 +9,14 @@ public class UserProfileResponse {
   private boolean creatorMembershipActive;
   private boolean investorMembershipActive;
   private Boolean kycVerified;
+  private String kycStatus;
 
   public UserProfileResponse() {}
 
   public UserProfileResponse(Long id, String name, String email, String role,
                              boolean creatorMembershipActive,
                              boolean investorMembershipActive,
-                             Boolean kycVerified) {
+                             Boolean kycVerified, String kycStatus) {
     this.id = id;
     this.name = name;
     this.email = email;
@@ -23,6 +24,7 @@ public class UserProfileResponse {
     this.creatorMembershipActive = creatorMembershipActive;
     this.investorMembershipActive = investorMembershipActive;
     this.kycVerified = kycVerified;
+    this.kycStatus = kycStatus;
   }
 
   public Long getId() { return id; }
@@ -38,4 +40,6 @@ public class UserProfileResponse {
   public boolean isInvestorMembershipActive() { return investorMembershipActive; }
 
   public Boolean getKycVerified() { return kycVerified; }
+
+  public String getKycStatus() { return kycStatus; }
 }

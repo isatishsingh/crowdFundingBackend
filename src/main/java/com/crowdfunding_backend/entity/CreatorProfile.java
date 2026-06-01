@@ -1,6 +1,7 @@
 package com.crowdfunding_backend.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 public class CreatorProfile {
@@ -17,9 +18,19 @@ public class CreatorProfile {
   private Boolean isMobileVerified = false;
   private Boolean isKycVerified = false;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private KycStatus kycStatus = KycStatus.NOT_SUBMITTED;
+
+  private LocalDateTime kycSubmittedAt;
+
   @OneToOne @JoinColumn(name = "user_id") private User user;
 
   // getters and setters
+  public Long getId() { return id; }
+
+  public void setId(Long id) { this.id = id; }
+
   public String getAadhaarNumber() { return aadhaarNumber; }
 
   public void setAadhaarNumber(String aadhaarNumber) {
@@ -67,4 +78,14 @@ public class CreatorProfile {
   public User getUser() { return user; }
 
   public void setUser(User user) { this.user = user; }
+
+  public KycStatus getKycStatus() { return kycStatus; }
+
+  public void setKycStatus(KycStatus kycStatus) { this.kycStatus = kycStatus; }
+
+  public LocalDateTime getKycSubmittedAt() { return kycSubmittedAt; }
+
+  public void setKycSubmittedAt(LocalDateTime kycSubmittedAt) {
+    this.kycSubmittedAt = kycSubmittedAt;
+  }
 }

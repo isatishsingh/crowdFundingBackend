@@ -3,6 +3,7 @@ package com.crowdfunding_backend.controller;
 import com.crowdfunding_backend.dto.project.*;
 import com.crowdfunding_backend.entity.User;
 import com.crowdfunding_backend.service.ProjectService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;

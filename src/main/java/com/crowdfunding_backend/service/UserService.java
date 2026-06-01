@@ -3,6 +3,7 @@ package com.crowdfunding_backend.service;
 import com.crowdfunding_backend.dto.user.UpdateUserProfileRequest;
 import com.crowdfunding_backend.dto.user.UserProfileResponse;
 import com.crowdfunding_backend.entity.CreatorProfile;
+import com.crowdfunding_backend.entity.KycStatus;
 import com.crowdfunding_backend.entity.Role;
 import com.crowdfunding_backend.entity.User;
 import com.crowdfunding_backend.exception.CustomException;
@@ -60,17 +61,25 @@ public class UserService {
         () -> new CustomException("User account not found.", 404));
 
     Boolean kycVerified = null;
+    String kycStatus = null;
     if (user.getRole() == Role.CREATOR) {
-      kycVerified =
-          creatorProfileRepository.findByUser_Id(user.getId())
-              .map(CreatorProfile::getIsKycVerified)
-              .orElse(false);
+      CreatorProfile profile =
+          creatorProfileRepository.findByUser_Id(user.getId()).orElse(null);
+      if (profile != null) {
+        kycStatus =
+            profile.getKycStatus() != null ? profile.getKycStatus().name() : null;
+        kycVerified = profile.getKycStatus() == KycStatus.APPROVED &&
+                        Boolean.TRUE.equals(profile.getIsKycVerified());
+      } else {
+        kycVerified = false;
+        kycStatus = KycStatus.NOT_SUBMITTED.name();
+      }
     }
 
     return new UserProfileResponse(
         user.getId(), user.getName(), user.getEmail(), user.getRole().name(),
         user.isCreatorMembershipActive(), user.isInvestorMembershipActive(),
-        kycVerified);
+        kycVerified, kycStatus);
   }
 
   public UserProfileResponse updateProfile(String email,

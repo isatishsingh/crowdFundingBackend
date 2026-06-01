@@ -28,4 +28,11 @@ public class CreatorController {
     System.out.println("Authenticated user email: " + email);
     return creatorService.createOrUpdateProfile(request, email);
   }
+
+  @GetMapping("/profile/status")
+  @PreAuthorize("hasRole('CREATOR')")
+  public CreatorProfileResponse getProfileStatus(Authentication authentication) {
+    User user = (User)authentication.getPrincipal();
+    return creatorService.getProfileStatus(user.getEmail());
+  }
 }

@@ -1,6 +1,8 @@
 package com.crowdfunding_backend.repository;
 
 import com.crowdfunding_backend.entity.CreatorProfile;
+import com.crowdfunding_backend.entity.KycStatus;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -14,4 +16,6 @@ public interface CreatorProfileRepository
   boolean existsByPanNumberIgnoreCaseAndUser_IdNot(String panNumber, Long userId);
 
   boolean existsByAadhaarNumberAndUser_IdNot(String aadhaarNumber, Long userId);
+
+  List<CreatorProfile> findByKycStatusOrderByKycSubmittedAtDesc(KycStatus kycStatus);
 }

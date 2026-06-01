@@ -26,6 +26,7 @@ public class DatabaseSchemaPatcher implements ApplicationRunner {
   public void run(ApplicationArguments args) {
     try {
       patchUsersTable();
+      patchCreatorProfileTable();
       patchPaymentTable();
       patchInvestmentsTable();
       log.info("Database schema patch completed.");
@@ -39,6 +40,19 @@ public class DatabaseSchemaPatcher implements ApplicationRunner {
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS creator_membership_active BOOLEAN NOT NULL DEFAULT FALSE");
     exec(
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS investor_membership_active BOOLEAN NOT NULL DEFAULT FALSE");
+  }
+
+  private void patchCreatorProfileTable() {
+    if (!tableExists("creator_profile")) {
+      log.warn("Table \"creator_profile\" not found; skipping KYC status patch.");
+      return;
+    }
+    exec(
+        "ALTER TABLE creator_profile ADD COLUMN IF NOT EXISTS kyc_status VARCHAR(32) NOT NULL DEFAULT 'NOT_SUBMITTED'");
+    exec(
+        "ALTER TABLE creator_profile ADD COLUMN IF NOT EXISTS kyc_submitted_at TIMESTAMP");
+    exec(
+        "UPDATE creator_profile SET kyc_status = 'APPROVED' WHERE is_kyc_verified = TRUE AND (kyc_status IS NULL OR kyc_status = 'NOT_SUBMITTED')");
   }
 
   private void patchPaymentTable() {
