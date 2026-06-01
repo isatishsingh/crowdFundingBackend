@@ -1,7 +1,12 @@
 package com.crowdfunding_backend.service;
 
+import com.crowdfunding_backend.dto.user.UpdateUserProfileRequest;
+import com.crowdfunding_backend.dto.user.UserProfileResponse;
+import com.crowdfunding_backend.entity.CreatorProfile;
 import com.crowdfunding_backend.entity.Role;
 import com.crowdfunding_backend.entity.User;
+import com.crowdfunding_backend.exception.CustomException;
+import com.crowdfunding_backend.repository.CreatorProfileRepository;
 import com.crowdfunding_backend.repository.UserRepository;
 import com.crowdfunding_backend.util.JwtUtil;
 import java.util.List;
@@ -16,6 +21,8 @@ public class UserService {
   @Autowired private UserRepository userRepository;
 
   @Autowired private JwtUtil jwtUtil;
+
+  @Autowired private CreatorProfileRepository creatorProfileRepository;
 
   public String loginAndGenerateToken(String email, String password) {
     User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
@@ -47,4 +54,49 @@ public class UserService {
 
   // Delete User
   public void deleteUser(Long id) { userRepository.deleteById(id); }
+
+  public UserProfileResponse getProfile(String email) {
+    User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
+        () -> new CustomException("User account not found.", 404));
+
+    Boolean kycVerified = null;
+    if (user.getRole() == Role.CREATOR) {
+      kycVerified =
+          creatorProfileRepository.findByUser_Id(user.getId())
+              .map(CreatorProfile::getIsKycVerified)
+              .orElse(false);
+    }
+
+    return new UserProfileResponse(
+        user.getId(), user.getName(), user.getEmail(), user.getRole().name(),
+        user.isCreatorMembershipActive(), user.isInvestorMembershipActive(),
+        kycVerified);
+  }
+
+  public UserProfileResponse updateProfile(String email,
+                                           UpdateUserProfileRequest request) {
+    User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
+        () -> new CustomException("User account not found.", 404));
+
+    user.setName(request.getName().trim());
+
+    String newPassword = request.getNewPassword();
+    if (newPassword != null && !newPassword.isBlank()) {
+      String currentPassword = request.getCurrentPassword();
+      if (currentPassword == null || currentPassword.isBlank()) {
+        throw new CustomException(
+            "Enter your current password to set a new password.",
+            400, "PASSWORD_CURRENT_REQUIRED");
+      }
+      if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+        throw new CustomException(
+            "Current password is incorrect. Your password was not changed.",
+            400, "PASSWORD_CURRENT_INVALID");
+      }
+      user.setPassword(passwordEncoder.encode(newPassword.trim()));
+    }
+
+    userRepository.save(user);
+    return getProfile(email);
+  }
 }

@@ -54,9 +54,14 @@ public class SecurityConfig {
 
         .authorizeHttpRequests(
             auth
-            -> auth.requestMatchers("/api/users/login", "/api/users",
-                                    "/api/users/register")
+            -> auth.requestMatchers("/api/users/login", "/api/users/register")
                    .permitAll()
+
+                   .requestMatchers(HttpMethod.GET, "/api/users")
+                   .permitAll()
+
+                   .requestMatchers("/api/users/me")
+                   .authenticated()
 
                    .requestMatchers("/api/webhook/razorpay")
                    .permitAll()
@@ -76,8 +81,17 @@ public class SecurityConfig {
                    .requestMatchers("/api/projects/mine")
                    .hasRole("CREATOR")
 
-                   .requestMatchers("/api/projects/**")
+                   .requestMatchers(HttpMethod.GET, "/api/projects/**")
                    .permitAll()
+
+                   .requestMatchers(HttpMethod.POST, "/api/projects")
+                   .hasRole("CREATOR")
+
+                   .requestMatchers(HttpMethod.PUT, "/api/projects/**")
+                   .hasRole("CREATOR")
+
+                   .requestMatchers(HttpMethod.DELETE, "/api/projects/**")
+                   .hasRole("CREATOR")
 
                    .requestMatchers("/api/investments/**")
                    .hasRole("INVESTOR")

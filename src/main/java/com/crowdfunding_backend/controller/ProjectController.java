@@ -30,18 +30,18 @@ public class ProjectController {
   @PutMapping("/{id}")
   @PreAuthorize("hasRole('CREATOR')")
   public ProjectResponse updateProject(@PathVariable Long id,
-                                       @RequestBody ProjectRequest request,
+                                       @Valid @RequestBody UpdateProjectRequest request,
                                        Authentication authentication) {
-
-    return projectService.updateProject(id, request, authentication.getName());
+    User user = (User)authentication.getPrincipal();
+    return projectService.updateProject(id, request, user.getEmail());
   }
 
   @DeleteMapping("/{id}")
   @PreAuthorize("hasRole('CREATOR')")
   public String deleteProject(@PathVariable Long id,
                               Authentication authentication) {
-
-    return projectService.deleteProject(id, authentication.getName());
+    User user = (User)authentication.getPrincipal();
+    return projectService.deleteProject(id, user.getEmail());
   }
 
   /** Investor / public listing — open campaigns only. */

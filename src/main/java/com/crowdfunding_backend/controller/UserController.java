@@ -1,12 +1,15 @@
 package com.crowdfunding_backend.controller;
 
 import com.crowdfunding_backend.dto.AuthResponse;
+import com.crowdfunding_backend.dto.user.UpdateUserProfileRequest;
+import com.crowdfunding_backend.dto.user.UserProfileResponse;
 import com.crowdfunding_backend.entity.User;
 import com.crowdfunding_backend.service.UserService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -39,6 +42,20 @@ public class UserController {
   @GetMapping("/investor/dashboard")
   public String investorDashboard() {
     return "Welcome Investor Dashboard";
+  }
+
+  @GetMapping("/me")
+  public UserProfileResponse getMyProfile(Authentication authentication) {
+    User user = (User)authentication.getPrincipal();
+    return userService.getProfile(user.getEmail());
+  }
+
+  @PutMapping("/me")
+  public UserProfileResponse updateMyProfile(
+      @Valid @RequestBody UpdateUserProfileRequest request,
+      Authentication authentication) {
+    User user = (User)authentication.getPrincipal();
+    return userService.updateProfile(user.getEmail(), request);
   }
 
   // Get All Users

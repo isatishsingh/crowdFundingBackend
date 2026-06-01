@@ -68,13 +68,11 @@ public class ProjectService {
 
     projectRepository.save(project);
 
-    return new ProjectResponse(project.getId(), project.getTitle(),
-                               project.getGoalAmount(),
-                               project.getCurrentAmount(), user.getEmail());
+    return toProjectResponse(project);
   }
 
   //   update project
-  public ProjectResponse updateProject(Long id, ProjectRequest request,
+  public ProjectResponse updateProject(Long id, UpdateProjectRequest request,
                                        String email) {
 
     User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(
@@ -88,19 +86,19 @@ public class ProjectService {
                         "Project not found or you do not have permission to edit it.",
                         404));
 
-    subscriptionService.validateCreatorGoalAmount(user,
-                                                  request.getGoalAmount());
+    if (request.getDeadline() == null ||
+        !request.getDeadline().isAfter(LocalDateTime.now())) {
+      throw new CustomException(
+          "Listing deadline must be a future date and time.", 400);
+    }
 
-    project.setTitle(request.getTitle());
-    project.setDescription(request.getDescription());
-    project.setGoalAmount(request.getGoalAmount());
+    project.setTitle(request.getTitle().trim());
+    project.setDescription(request.getDescription().trim());
     project.setDeadline(request.getDeadline());
 
     projectRepository.save(project);
 
-    return new ProjectResponse(project.getId(), project.getTitle(),
-                               project.getGoalAmount(),
-                               project.getCurrentAmount(), user.getEmail());
+    return toProjectResponse(project);
   }
 
   //   delete project
@@ -116,6 +114,19 @@ public class ProjectService {
                     -> new CustomException(
                         "Project not found or you do not have permission to delete it.",
                         404));
+
+    if (investmentRepository.countByProject_Id(id) > 0) {
+      throw new CustomException(
+          "This project cannot be deleted because it already has investments.",
+          400);
+    }
+
+    double funded =
+        project.getCurrentAmount() != null ? project.getCurrentAmount() : 0;
+    if (funded > 0.01) {
+      throw new CustomException(
+          "This project cannot be deleted after funding has started.", 400);
+    }
 
     projectRepository.delete(project);
 
@@ -255,6 +266,51 @@ public class ProjectService {
     dto.setRemainingEquity(project.getTotalEquityOffered() -
                            project.getEquityAllocated());
 
+    dto.setDescription(project.getDescription());
+    dto.setDeadline(project.getDeadline());
+
+    applyCreatorGstForInvestor(dto, project, viewer);
+
+    return dto;
+  }
+
+  private void applyCreatorGstForInvestor(ProjectResponse dto, Project project,
+                                        User viewer) {
+    if (viewer == null || viewer.getRole() != Role.INVESTOR ||
+        project.getCreator() == null) {
+      return;
+    }
+
+    creatorProfileRepository
+        .findByUser_Id(project.getCreator().getId())
+        .map(CreatorProfile::getGstNumber)
+        .filter(gst -> gst != null && !gst.isBlank())
+        .ifPresent(dto::setCreatorGstNumber);
+  }
+
+  private ProjectResponse toProjectResponse(Project project) {
+    ProjectResponse dto = new ProjectResponse();
+    dto.setId(project.getId());
+    dto.setTitle(project.getTitle());
+    dto.setDescription(project.getDescription());
+    dto.setGoalAmount(project.getGoalAmount());
+    dto.setCurrentAmount(project.getCurrentAmount());
+    dto.setDeadline(project.getDeadline());
+    dto.setCreatorEmail(
+        project.getCreator() != null ? project.getCreator().getEmail() : null);
+    dto.setTotalEquityOffered(project.getTotalEquityOffered());
+    dto.setEquityAllocated(project.getEquityAllocated());
+    double goal = project.getGoalAmount() != null ? project.getGoalAmount() : 0;
+    double current =
+        project.getCurrentAmount() != null ? project.getCurrentAmount() : 0;
+    dto.setRemainingAmount(goal - current);
+    double totalEquity = project.getTotalEquityOffered() != null
+                             ? project.getTotalEquityOffered()
+                             : 0;
+    double allocated = project.getEquityAllocated() != null
+                         ? project.getEquityAllocated()
+                         : 0;
+    dto.setRemainingEquity(totalEquity - allocated);
     return dto;
   }
 
