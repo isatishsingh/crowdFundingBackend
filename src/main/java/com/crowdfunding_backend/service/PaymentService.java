@@ -80,6 +80,7 @@ public class PaymentService {
             .amount(request.getAmount())
             .equityPercentage(request.getEquityPercentage())
             .status("PENDING")
+            .paymentType(PaymentType.INVESTMENT)
             .razorpayOrderId(order.get("id"))
             .createdAt(LocalDateTime.now())
             .investmentRequestId(request.getId()) // VERY IMPORTANT
@@ -127,6 +128,9 @@ public class PaymentService {
       // MARK SUCCESS
       payment.setStatus("SUCCESS");
       payment.setRazorpayPaymentId(paymentId);
+      if (payment.getReceiptNumber() == null) {
+        payment.setReceiptNumber("CB-" + payment.getId() + "-" + System.currentTimeMillis());
+      }
 
       paymentRepository.save(payment);
 

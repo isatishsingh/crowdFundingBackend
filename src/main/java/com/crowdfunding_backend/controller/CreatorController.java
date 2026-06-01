@@ -4,6 +4,7 @@ import com.crowdfunding_backend.dto.creator.CreatorProfileRequest;
 import com.crowdfunding_backend.dto.creator.CreatorProfileResponse;
 import com.crowdfunding_backend.entity.User;
 import com.crowdfunding_backend.service.CreatorService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -18,7 +19,7 @@ public class CreatorController {
   @PostMapping("/profile")
   @PreAuthorize("hasRole('CREATOR')")
   public CreatorProfileResponse
-  createProfile(@RequestBody CreatorProfileRequest request,
+  createProfile(@Valid @RequestBody CreatorProfileRequest request,
                 Authentication authentication) {
     Object principal = authentication.getPrincipal();
     System.out.println("Principal: " + principal);

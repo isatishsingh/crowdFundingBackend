@@ -1,9 +1,12 @@
 package com.crowdfunding_backend.controller;
 
+import com.crowdfunding_backend.dto.investment.InvestmentHistoryResponse;
 import com.crowdfunding_backend.dto.investmentRequest.*;
 import com.crowdfunding_backend.entity.User;
 import com.crowdfunding_backend.service.InvestmentService;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +15,13 @@ import org.springframework.web.bind.annotation.*;
 public class InvestmentController {
 
   @Autowired private InvestmentService investmentService;
+
+  @GetMapping("/history")
+  @PreAuthorize("hasRole('INVESTOR')")
+  public List<InvestmentHistoryResponse> getHistory(Authentication authentication) {
+    User user = (User)authentication.getPrincipal();
+    return investmentService.getInvestmentHistory(user.getId());
+  }
 
   // @PostMapping
   public InvestmentRequestResponse invest(Authentication authentication,

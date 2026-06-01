@@ -19,8 +19,13 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
   Optional<Project> findByIdAndCreator_Id(Long projectId, Long creatorId);
   Page<Project> findByTitleContainingIgnoreCase(String title,
                                                 Pageable pageable);
+  /** Visible on investor browse — deadline open, funding goal not met, equity still available. */
   @Query(
-      "SELECT p FROM Project p WHERE p.deadline > :now AND p.currentAmount < p.goalAmount")
-  List<Project>
-  findActiveAndNotFundedProjects(@Param("now") LocalDateTime now);
+      "SELECT p FROM Project p WHERE p.deadline > :now "
+      + "AND p.currentAmount < p.goalAmount "
+      + "AND (p.totalEquityOffered IS NULL OR p.equityAllocated IS NULL "
+      + "OR p.equityAllocated < p.totalEquityOffered)")
+  List<Project> findOpenForInvestors(@Param("now") LocalDateTime now);
+
+  List<Project> findByCreator_IdOrderByCreatedAtDesc(Long creatorId);
 }

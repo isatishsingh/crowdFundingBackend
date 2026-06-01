@@ -44,9 +44,18 @@ public class ProjectController {
     return projectService.deleteProject(id, authentication.getName());
   }
 
+  /** Investor / public listing — open campaigns only. */
   @GetMapping
-  public List<ProjectListResponse> getAllProjects() {
-    return projectService.getAllProjects();
+  public List<ProjectListResponse> getProjectsForInvestors() {
+    return projectService.getProjectsForInvestors();
+  }
+
+  /** Creator dashboard — all own campaigns including fully funded. */
+  @GetMapping("/mine")
+  @PreAuthorize("hasRole('CREATOR')")
+  public List<ProjectListResponse> getMyProjects(Authentication authentication) {
+    User user = (User)authentication.getPrincipal();
+    return projectService.getProjectsForCreator(user.getEmail());
   }
 
   /** Completed investments: investor name, amount, equity %, date (public). */
@@ -57,8 +66,9 @@ public class ProjectController {
   }
 
   @GetMapping("/{id}")
-  public ProjectResponse getProject(@PathVariable Long id) {
-    return projectService.getProject(id);
+  public ProjectResponse getProject(@PathVariable Long id, Authentication authentication) {
+    User viewer = authentication != null ? (User)authentication.getPrincipal() : null;
+    return projectService.getProject(id, viewer);
   }
 
   @GetMapping("/{id}/stats")

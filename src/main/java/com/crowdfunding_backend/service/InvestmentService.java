@@ -1,10 +1,14 @@
 package com.crowdfunding_backend.service;
 
+import com.crowdfunding_backend.dto.investment.InvestmentHistoryResponse;
 import com.crowdfunding_backend.dto.investmentRequest.*;
 import com.crowdfunding_backend.entity.*;
 import com.crowdfunding_backend.exception.CustomException;
 import com.crowdfunding_backend.repository.*;
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +20,35 @@ public class InvestmentService {
   @Autowired private ProjectRepository projectRepository;
 
   @Autowired private UserRepository userRepository;
+
+  @Autowired private PaymentRepository paymentRepository;
+
+  public List<InvestmentHistoryResponse> getInvestmentHistory(Long investorId) {
+    return investmentRepository.findByInvestor_Id(investorId).stream()
+        .sorted(Comparator.comparing(
+                     Investment::getInvestedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+        .map(this::toHistoryItem)
+        .collect(Collectors.toList());
+  }
+
+  private InvestmentHistoryResponse toHistoryItem(Investment investment) {
+    Payment payment = null;
+    if (investment.getPaymentId() != null) {
+      payment = paymentRepository.findById(investment.getPaymentId()).orElse(null);
+    }
+
+    return InvestmentHistoryResponse.builder()
+        .investmentId(investment.getId())
+        .projectId(investment.getProject().getId())
+        .projectTitle(investment.getProject().getTitle())
+        .amountInvested(investment.getAmount())
+        .equityOwned(investment.getEquityPercentage())
+        .investmentDate(investment.getInvestedAt())
+        .paymentId(investment.getPaymentId())
+        .receiptNumber(payment != null ? payment.getReceiptNumber() : null)
+        .razorpayPaymentId(payment != null ? payment.getRazorpayPaymentId() : null)
+        .build();
+  }
 
   public void createInvestmentFromPayment(Payment payment) {
 

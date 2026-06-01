@@ -30,6 +30,8 @@ public class Investment {
 
   @Column(name = "invested_at") private LocalDateTime investedAt;
 
+  @Column(name = "payment_id") private Long paymentId;
+
   @PrePersist
   public void prePersist() {
     this.investedAt = LocalDateTime.now();

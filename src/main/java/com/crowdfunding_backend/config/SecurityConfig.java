@@ -1,11 +1,15 @@
 package com.crowdfunding_backend.config;
 
+import com.crowdfunding_backend.exception.ErrorResponse;
 import com.crowdfunding_backend.security.JwtFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,11 +25,25 @@ public class SecurityConfig {
 
   @Autowired private JwtFilter jwtFilter;
 
+  @Autowired private ObjectMapper objectMapper;
+
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http)
       throws Exception {
 
     http.csrf(csrf -> csrf.disable())
+        .exceptionHandling(
+            exceptions
+            -> exceptions
+                   .authenticationEntryPoint(
+                       (request, response, authException)
+                           -> writeJsonError(response, 401, "AUTH_REQUIRED",
+                                           "Please sign in to continue."))
+                   .accessDeniedHandler(
+                       (request, response, accessDeniedException)
+                           -> writeJsonError(
+                               response, 403, "ACCESS_DENIED",
+                               "You must be signed in as a creator to complete verification.")))
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .formLogin(form -> form.disable())
         .httpBasic(basic -> basic.disable())
@@ -55,14 +73,20 @@ public class SecurityConfig {
                    .requestMatchers("/api/creator/**")
                    .hasRole("CREATOR")
 
+                   .requestMatchers("/api/projects/mine")
+                   .hasRole("CREATOR")
+
                    .requestMatchers("/api/projects/**")
                    .permitAll()
 
-                   .requestMatchers("/api/projects")
-                   .authenticated()
-
                    .requestMatchers("/api/investments/**")
                    .hasRole("INVESTOR")
+
+                   .requestMatchers("/api/subscriptions/**")
+                   .authenticated()
+
+                   .requestMatchers("/api/payments/receipt/**")
+                   .authenticated()
 
                    .requestMatchers(HttpMethod.POST,
                                     "/api/investment-request")
@@ -110,5 +134,22 @@ public class SecurityConfig {
     source.registerCorsConfiguration("/**", configuration);
 
     return source;
+  }
+
+  private void writeJsonError(jakarta.servlet.http.HttpServletResponse response,
+                              int status, String code, String message)
+      throws java.io.IOException {
+
+    response.setStatus(status);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+    ErrorResponse body = ErrorResponse.builder()
+                             .message(message)
+                             .code(code)
+                             .status(status)
+                             .timestamp(LocalDateTime.now())
+                             .build();
+
+    objectMapper.writeValue(response.getWriter(), body);
   }
 }

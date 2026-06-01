@@ -1,6 +1,10 @@
 package com.crowdfunding_backend.controller;
 
-import com.crowdfunding_backend.dto.payment.*;
+import com.crowdfunding_backend.dto.payment.CreateOrderRequest;
+import com.crowdfunding_backend.dto.payment.CreateOrderResponse;
+import com.crowdfunding_backend.dto.payment.PaymentReceiptResponse;
+import com.crowdfunding_backend.dto.payment.VerifyPaymentRequest;
+import com.crowdfunding_backend.dto.payment.VerifyPaymentResponse;
 import com.crowdfunding_backend.entity.User;
 import com.crowdfunding_backend.service.PaymentDetailsValidation;
 import com.crowdfunding_backend.service.PaymentService;
@@ -31,14 +35,15 @@ public class PaymentController {
   }
 
   @PostMapping("/verify")
-  public String verifyPayment(@RequestBody VerifyPaymentRequest request) {
+  public VerifyPaymentResponse verifyPayment(@RequestBody VerifyPaymentRequest request) {
+    return validation.verifyInvestmentPayment(request);
+  }
 
-    boolean isValid = validation.verifyPayment(request);
+  @GetMapping("/receipt/{paymentId}")
+  public PaymentReceiptResponse getReceipt(
+      Authentication authentication, @PathVariable Long paymentId) {
 
-    if (isValid) {
-      return "Payment verified successfully";
-    } else {
-      return "Payment verification failed";
-    }
+    User user = (User)authentication.getPrincipal();
+    return validation.getReceiptForUser(user.getId(), paymentId);
   }
 }

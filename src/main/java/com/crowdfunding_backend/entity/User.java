@@ -27,6 +27,12 @@ public class User {
 
   @Enumerated(EnumType.STRING) @Column(nullable = false) private Role role;
 
+  @Column(nullable = false)
+  private boolean creatorMembershipActive = false;
+
+  @Column(nullable = false)
+  private boolean investorMembershipActive = false;
+
   // Constructors
   public User() {}
 
@@ -56,4 +62,16 @@ public class User {
   public Role getRole() { return role; }
 
   public void setRole(Role role) { this.role = role; }
+
+  public boolean isCreatorMembershipActive() { return creatorMembershipActive; }
+
+  public void setCreatorMembershipActive(boolean creatorMembershipActive) {
+    this.creatorMembershipActive = creatorMembershipActive;
+  }
+
+  public boolean isInvestorMembershipActive() { return investorMembershipActive; }
+
+  public void setInvestorMembershipActive(boolean investorMembershipActive) {
+    this.investorMembershipActive = investorMembershipActive;
+  }
 }

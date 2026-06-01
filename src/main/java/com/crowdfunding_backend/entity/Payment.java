@@ -23,6 +23,12 @@ public class Payment {
   private Double equityPercentage;
   private Long investmentRequestId;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private PaymentType paymentType = PaymentType.INVESTMENT;
+
+  private String receiptNumber;
+
   private String razorpayOrderId;
   private String razorpayPaymentId;
 

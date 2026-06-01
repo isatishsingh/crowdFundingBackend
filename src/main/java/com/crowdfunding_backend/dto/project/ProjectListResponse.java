@@ -23,4 +23,9 @@ public class ProjectListResponse {
 
   // 🔥 Optional (recommended)
   private Double fundingPercentage;
+
+  /** False when goal or equity is fully allocated — hidden from investor listings. */
+  private Boolean openForInvestment;
+
+  private String listingStatus;
 }

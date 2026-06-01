@@ -12,12 +12,13 @@ public class CreatorProfileRequest {
            message = "Invalid PAN format")
   private String panNumber;
 
-  @Pattern(regexp = "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$",
-           message = "Invalid GST number")
-
+  @Pattern(
+      regexp =
+          "^$|^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$",
+      message = "Invalid GST number")
   private String gstNumber;
 
-  @Pattern(regexp = "^[A-Z][0-9]{7}$", message = "Invalid passport number")
+  @Pattern(regexp = "^$|^[A-Z][0-9]{7}$", message = "Invalid passport number")
   private String passportNumber;
 
   @NotBlank(message = "Phone number is required")

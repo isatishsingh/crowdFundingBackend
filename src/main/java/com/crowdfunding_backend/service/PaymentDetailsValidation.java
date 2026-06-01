@@ -1,6 +1,8 @@
 package com.crowdfunding_backend.service;
 
+import com.crowdfunding_backend.dto.payment.PaymentReceiptResponse;
 import com.crowdfunding_backend.dto.payment.VerifyPaymentRequest;
+import com.crowdfunding_backend.dto.payment.VerifyPaymentResponse;
 import com.crowdfunding_backend.entity.*;
 import com.crowdfunding_backend.exception.CustomException;
 import com.crowdfunding_backend.repository.InvestmentRepository;
@@ -25,6 +27,8 @@ public class PaymentDetailsValidation {
   @Autowired private InvestmentRepository investmentRepository;
   @Autowired private UserRepository userRepository;
   @Autowired private InvestmentRequestRepository investmentRequestRepository;
+
+  @Autowired private SubscriptionService subscriptionService;
 
   @Value("${razorpay.secret}") private String razorpaySecret;
 
@@ -77,6 +81,9 @@ public class PaymentDetailsValidation {
     if (requested.compareTo(remaining) > 0) {
       throw new CustomException("Equity exceeds remaining equity", 400);
     }
+
+    subscriptionService.validateInvestorCanInvest(
+        investor, project.getId(), amount);
   }
 
   public double normalizeEquity(Double equityPercentage) {
@@ -88,48 +95,112 @@ public class PaymentDetailsValidation {
         .doubleValue();
   }
 
-  public boolean verifyPayment(VerifyPaymentRequest request) {
-
+  public boolean verifySignatureOnly(VerifyPaymentRequest request) {
     try {
       String data =
           request.getRazorpayOrderId() + "|" + request.getRazorpayPaymentId();
-
       String generatedSignature = hmacSHA256(data, razorpaySecret);
-
-      if (!generatedSignature.equals(request.getRazorpaySignature())) {
-        throw new CustomException("Invalid payment signature", 400);
-      }
-
-      // FETCH PAYMENT FROM DB
-      Payment payment =
-          paymentRepository.findByRazorpayOrderId(request.getRazorpayOrderId())
-              .orElseThrow(() -> new CustomException("Payment not found", 404));
-
-      // CHECK STATUS
-      if (!payment.getStatus().equals("PENDING")) {
-        throw new CustomException("Payment already processed", 400);
-      }
-
-      // OPTIONAL: FETCH FROM RAZORPAY FOR DOUBLE CHECK
-      // Payment razorpayPayment =
-      // razorpayClient.payments.fetch(request.getRazorpayPaymentId());
-
-      // MARK SUCCESS
-      payment.setStatus("SUCCESS");
-      payment.setRazorpayPaymentId(request.getRazorpayPaymentId());
-
-      paymentRepository.save(payment);
-
-      // CREATE INVESTMENT HERE (IMPORTANT)
-      createInvestmentFromPayment(payment);
-
-      return true;
-
-    } catch (Exception e) {
-
-      throw new CustomException(
-          "Payment verification failed: " + e.getMessage(), 400);
+      return generatedSignature.equals(request.getRazorpaySignature());
+    } catch (Exception ex) {
+      return false;
     }
+  }
+
+  public VerifyPaymentResponse verifyInvestmentPayment(VerifyPaymentRequest request) {
+    if (!verifySignatureOnly(request)) {
+      return VerifyPaymentResponse.builder()
+          .success(false)
+          .message("Payment signature could not be verified. Contact support if money was debited.")
+          .build();
+    }
+
+    Payment payment =
+        paymentRepository
+            .findByRazorpayOrderId(request.getRazorpayOrderId())
+            .orElseThrow(
+                () -> new CustomException("Payment record not found for this order.", 404));
+
+    if (payment.getPaymentType() != PaymentType.INVESTMENT) {
+      throw new CustomException("This order is not an investment payment.", 400);
+    }
+
+    if ("SUCCESS".equals(payment.getStatus())) {
+      return VerifyPaymentResponse.builder()
+          .success(true)
+          .message("Payment was already recorded.")
+          .receipt(buildReceipt(payment))
+          .build();
+    }
+
+    payment.setStatus("SUCCESS");
+    payment.setRazorpayPaymentId(request.getRazorpayPaymentId());
+    if (payment.getReceiptNumber() == null) {
+      payment.setReceiptNumber(subscriptionService.generateReceiptNumber(payment.getId()));
+    }
+    paymentRepository.save(payment);
+
+    createInvestmentFromPayment(payment);
+
+    return VerifyPaymentResponse.builder()
+        .success(true)
+        .message("Payment verified successfully.")
+        .receipt(buildReceipt(payment))
+        .build();
+  }
+
+  public PaymentReceiptResponse getReceiptForUser(Long userId, Long paymentId) {
+    Payment payment =
+        paymentRepository
+            .findById(paymentId)
+            .orElseThrow(() -> new CustomException("Receipt not found.", 404));
+
+    if (!payment.getUserId().equals(userId)) {
+      throw new CustomException("You are not allowed to view this receipt.", 403);
+    }
+
+    if (!"SUCCESS".equals(payment.getStatus())) {
+      throw new CustomException("Receipt is available only for successful payments.", 400);
+    }
+
+    return buildReceipt(payment);
+  }
+
+  public PaymentReceiptResponse buildReceipt(Payment payment) {
+    Payment fresh =
+        paymentRepository.findById(payment.getId()).orElse(payment);
+
+    User investor =
+        userRepository
+            .findById(fresh.getUserId())
+            .orElseThrow(() -> new CustomException("Investor not found", 404));
+
+    Project project =
+        projectRepository
+            .findById(fresh.getProjectId())
+            .orElseThrow(() -> new CustomException("Project not found", 404));
+
+    Investment investment =
+        investmentRepository.findByInvestor_Id(investor.getId()).stream()
+            .filter(inv -> fresh.getId().equals(inv.getPaymentId()))
+            .findFirst()
+            .orElse(null);
+
+    return PaymentReceiptResponse.builder()
+        .paymentId(fresh.getId())
+        .receiptNumber(fresh.getReceiptNumber())
+        .razorpayOrderId(fresh.getRazorpayOrderId())
+        .razorpayPaymentId(fresh.getRazorpayPaymentId())
+        .amount(fresh.getAmount())
+        .currency("INR")
+        .status(fresh.getStatus())
+        .projectId(project.getId())
+        .projectTitle(project.getTitle())
+        .equityPercentage(fresh.getEquityPercentage())
+        .investorName(investor.getName())
+        .investorEmail(investor.getEmail())
+        .paidAt(fresh.getCreatedAt())
+        .investmentId(investment != null ? investment.getId() : null)
+        .build();
   }
 
   public String hmacSHA256(String data, String secret) throws Exception {
@@ -166,12 +237,19 @@ public class PaymentDetailsValidation {
             .orElseThrow(() -> new CustomException("Project not found", 404));
 
     // Create investment using REQUEST (NOT payment)
-    Investment investment = Investment.builder()
-                                .investor(investor)
-                                .project(project)
-                                .amount(request.getAmount())
-                                .equityPercentage(request.getEquityPercentage())
-                                .build();
+    Investment investment =
+        Investment.builder()
+            .investor(investor)
+            .project(project)
+            .amount(request.getAmount())
+            .equityPercentage(request.getEquityPercentage())
+            .paymentId(payment.getId())
+            .build();
+
+    if (payment.getReceiptNumber() == null) {
+      payment.setReceiptNumber(subscriptionService.generateReceiptNumber(payment.getId()));
+      paymentRepository.save(payment);
+    }
 
     // Update project funding
     project.setCurrentAmount(project.getCurrentAmount() + request.getAmount());

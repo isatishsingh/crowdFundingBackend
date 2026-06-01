@@ -32,13 +32,13 @@ public class UserController {
   @PreAuthorize("hasRole('CREATOR')")
   @GetMapping("/creator/dashboard")
   public String creatorDashboard() {
-    return "Welcome Creator Dashboard 🚀";
+    return "Welcome Creator Dashboard";
   }
 
   @PreAuthorize("hasRole('INVESTOR')")
   @GetMapping("/investor/dashboard")
   public String investorDashboard() {
-    return "Welcome Investor Dashboard 💰";
+    return "Welcome Investor Dashboard";
   }
 
   // Get All Users

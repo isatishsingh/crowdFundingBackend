@@ -10,6 +10,7 @@ import lombok.Data;
 public class ErrorResponse {
 
   private String message;
+  private String code;
   private int status;
   private LocalDateTime timestamp;
 }
